@@ -1,3 +1,6 @@
+require('dotenv').config();
+
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
@@ -10,7 +13,10 @@ var rssSource = "http://www.oecd.org/";
 var rssSourceEnd = "/index.xml";
 var rssGuardian = "https://www.theguardian.com/world/";
 var fs = require("fs");
+const NewsAPI = require('newsapi');
+const newsapi = new NewsAPI('7a7ea783738a496d99eec1bcdd6cff7b');
 var NaturalLanguageUnderstandingV1 = require("ibm-watson/natural-language-understanding/v1.js");
+const LanguageTranslatorV3 = require('ibm-watson/language-translator/v3');
 require("dotenv").config({ silent: true }); //  optional
 
 var requiredUrl = "";
@@ -46,111 +52,92 @@ var finalDetail = {
   listOfAllUrls: []
 };
 var articlesUrl = [];
-
+var googleArticles = []
 // ENDPOINT FOR POST
-
 app.post("/sendNewsUrl/:country", function(request, response) {
-  const country = request.params.country;
+  const userInput = request.params.country;
+  googleArticles = []
+  newsapi.v2.topHeadlines({
+    language: 'en',
+    country: userInput
+  }).then(googleRes => {
+    // console.log('google news api json : ', googleRes);
+    const metaObject = [];
+    googleArticles = Object.values(googleRes)[2]
+    googleArticles.length = 20
+    for (var i = 0; i <= googleArticles.length; i++) {
+      if (googleArticles[i] ) {
+        // translate the article before to analyze
 
-  console.log(country);
-
-  var url = `${rssGuardian}${country}/rss`;
-  //  var url = `${rssSource}${body}${rssSourceEnd}`
-  console.log("A son of a bitch requested this country ", url);
-  axios
-    .get(url)
-    .then(function(template) {
-      fetchLinksTemplate(template.data);
-      const metaObject = [];
-      for (var i = 0; i <= Object.keys(articlesUrl).length; i++) {
-        if (articlesUrl[i]) {
-          var nlu = new NaturalLanguageUnderstandingV1({
-            version: "2018-11-16"
-          });
-          var options = {
-            url: articlesUrl[i].trim(),
-            features: {
-              concepts: {},
-              categories: {},
-              // entities: {},
-              // keywords: {},
-              sentiment: {}
-            }
-          };
-          nlu.analyze(options, function(err, res) {
-            if (err) {
-              console.log(err);
-              return;
-            }
-            // console.log(res);
-            metaObject.push(res);
-            if (metaObject.length === Object.keys(articlesUrl).length - 1) {
-              setTimeout(() => {
-                extractDataFromWatsonResponse(metaObject);
-                dataCalculation();
-                response.json(finalDetail);
-                // console.log('end extractDataFromWatsonResponse', short_analyses)
-              }, 1000);
-            }
-          });
+        const languageTranslator = new LanguageTranslatorV3({
+          username: process.env.LANGUAGE_TRANSLATOR_USERNAME || 'albertlouzon@gmail.com',
+          password: process.env.LANGUAGE_TRANSLATOR_PASSWORD || 'Megagares1',
+          iam_access_token: LANGUAGE_TRANSLATOR_IAM_APIKEY='Ca0B4XsSHGB7-uvoYvxrzg6Fh4F5pSoOqWix_v2uegja',
+          version: '2019-01-10'
+        });
+        
+        const params = {
+          text: "Hello, this is a example of translating language with Watson.",
+          source: 'en',
+          target: 'es',
         }
-      }
-    })
-    .catch(function(error) {
-      console.log(error);
-      response.send("this link is broken, give me another link");
-    });
-});
 
-// Extracting links from html templates
+        // languageTranslator.translate(params)
+        // .then(body => {
+        //   // console.log(JSON.stringify(body, null, 2));
+        //   // console.log('\n');
+        //   response.send(JSON.stringify(body, null, 2))
+        // })
+        // .catch(err => {
+        //   console.log(err);
+        // })
 
-function fetchLinksTemplate(htmlTemplate) {
-  console.log("invoed");
-  articlesUrl = [];
-  var parser = new DomParser();
-
-  const doc = parser.parseFromString(htmlTemplate, "text/html");
-  const linkContainer = doc.getElementsByTagName("item");
-
-  for (var i = 0; i <= linkContainer.length; i++) {
-    if (linkContainer[i]) {
-      const bigText = linkContainer[i].innerHTML;
-      // console.log('section ', bigText)
-      if (bigText.includes("<link/>https://www.theguardian.com")) {
-        let linkFlag = false;
-        for (var letter = 0; letter <= bigText.length; letter++) {
-          if (
-            linkFlag === false &&
-            bigText[letter - 4] === "l" &&
-            bigText[letter - 3] === "i" &&
-            bigText[letter - 2] === "n" &&
-            bigText[letter - 1] === "k" &&
-            bigText[letter] === "/"
-          ) {
-            if (
-              articlesUrl.find(
-                link =>
-                  link ===
-                  bigText.substring(
-                    letter + 2,
-                    bigText.indexOf("description") - 1
-                  )
-              )
-            ) {
-            } else {
-              articlesUrl.push(
-                bigText.substring(
-                  letter + 2,
-                  bigText.indexOf("description") - 1
-                )
-              );
-            }
+        var nlu = new NaturalLanguageUnderstandingV1({
+          version: "2018-11-16"
+        });
+        var options = {
+          url: googleArticles[i].url,
+          features: {
+            concepts: {},
+            categories: {},
+            // entities: {},
+            // keywords: {},
+            sentiment: {}
           }
-        }
+        };
+        nlu.analyze(options, function(err, res) {
+          if (err) {
+            console.log(err);
+            return;
+          }
+          // console.log(res);
+          metaObject.push(res);
+          if (metaObject.length === googleArticles.length - 1) {
+            setTimeout(() => {
+              extractDataFromWatsonResponse(metaObject);
+              dataCalculation();
+              response.json(finalDetail);
+              // console.log('end extractDataFromWatsonResponse', googleArticles)
+            }, 1000);
+          }
+        });
       }
     }
-  }
-}
+  })
+  .catch(function(error) {
+    console.log(error);
+    response.send("this link is broken, give me another link");
+  });
+    /*
+      {
+        status: "ok",
+        sources: [...]
+      }
+    */
+
+
+})
+// Extracting links from html templates
 
 // Data logic
 function extractDataFromWatsonResponse(metaObject) {
@@ -234,7 +221,8 @@ function dataCalculation() {
     const total = categoryScore / scoreDivider3;
     cat["globalCatScore"] = total;
   });
+  finalDetail['articlesDetail'] = googleArticles
   console.log("end dataCalcultation, finalDetail:", finalDetail);
-  finalDetail.listOfAllUrls.length = 7;
+  // finalDetail.listOfAllUrls.length = 7;
   return finalDetail;
 }
