@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
+const LanguageTranslatorV3 = require('ibm-watson/language-translator/v3.js');
 const axios = require("axios");
 var querystring = require("querystring");
 var cors = require("cors");
@@ -16,7 +17,6 @@ var fs = require("fs");
 const NewsAPI = require('newsapi');
 const newsapi = new NewsAPI('7a7ea783738a496d99eec1bcdd6cff7b');
 var NaturalLanguageUnderstandingV1 = require("ibm-watson/natural-language-understanding/v1.js");
-const LanguageTranslatorV3 = require('ibm-watson/language-translator/v3');
 require("dotenv").config({ silent: true }); //  optional
 
 var requiredUrl = "";
@@ -57,10 +57,15 @@ var googleArticles = []
 app.post("/sendNewsUrl/:country", function(request, response) {
   const userInput = request.params.country;
   googleArticles = []
+  console.log('one')
   newsapi.v2.topHeadlines({
+    // sources: 'bbc-news,the-verge',
+    // q: 'bitcoin',
+    // category: 'business',
     language: 'en',
     country: userInput
   }).then(googleRes => {
+    // console.log('googleres', googleRes)
     // console.log('google news api json : ', googleRes);
     const metaObject = [];
     googleArticles = Object.values(googleRes)[2]
@@ -70,27 +75,25 @@ app.post("/sendNewsUrl/:country", function(request, response) {
         // translate the article before to analyze
 
         const languageTranslator = new LanguageTranslatorV3({
-          username: process.env.LANGUAGE_TRANSLATOR_USERNAME || 'albertlouzon@gmail.com',
-          password: process.env.LANGUAGE_TRANSLATOR_PASSWORD || 'Megagares1',
-          iam_access_token: LANGUAGE_TRANSLATOR_IAM_APIKEY='Ca0B4XsSHGB7-uvoYvxrzg6Fh4F5pSoOqWix_v2uegja',
-          version: '2019-01-10'
+           iam_apikey: 'Ca0B4XsSHGB7-uvoYvxrzg6Fh4F5pSoOqWix_v2uegja',
+           url: 'https://gateway-lon.watsonplatform.net/language-translator/api',
+          version: "2018-11-16"
         });
         
         const params = {
-          text: "Hello, this is a example of translating language with Watson.",
-          source: 'en',
+          text: 'sale chien',
+          source: 'fr',
           target: 'es',
         }
 
-        // languageTranslator.translate(params)
-        // .then(body => {
-        //   // console.log(JSON.stringify(body, null, 2));
-        //   // console.log('\n');
-        //   response.send(JSON.stringify(body, null, 2))
-        // })
-        // .catch(err => {
-        //   console.log(err);
-        // })
+        languageTranslator.translate(params)
+        .then(body => {
+          // console.log('\n');
+          console.log('incroyable ############### ', body['translations'][0]['translation'])
+        })
+        .catch(err => {
+          console.log(err);
+        })
 
         var nlu = new NaturalLanguageUnderstandingV1({
           version: "2018-11-16"
@@ -171,14 +174,17 @@ function dataCalculation() {
   let commonCategories = [];
   short_analyses.forEach(article => {
     // score
-    article.categories.articleScore = article.generalInfo.score;
     finalDetail.listOfAllUrls.push(article.url);
     sumOfscore = sumOfscore + article.generalInfo.score;
-    // categories filtered into mainCategories
-    const currentCategories = article.categories.label;
-    const articlesSharingCategories = short_analyses.filter(
-      x => x.categories.label === currentCategories && x.url !== article.url
-    );
+    let articlesSharingCategories = []
+    if(article['categories']) {
+      article.categories.articleScore = article.generalInfo.score;
+      const currentCategories = article.categories.label;
+      articlesSharingCategories = short_analyses.filter(
+       x => x.categories.label === currentCategories && x.url !== article.url
+     );
+    }
+ 
     if (articlesSharingCategories.length > 1) {
       commonCategories.push(articlesSharingCategories);
     }
@@ -222,7 +228,6 @@ function dataCalculation() {
     cat["globalCatScore"] = total;
   });
   finalDetail['articlesDetail'] = googleArticles
-  console.log("end dataCalcultation, finalDetail:", finalDetail);
   // finalDetail.listOfAllUrls.length = 7;
   return finalDetail;
 }
