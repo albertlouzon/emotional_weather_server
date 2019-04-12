@@ -1,0 +1,21 @@
+{
+  "name": "emotional-weather-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.5",
+    "dom-parser": "^0.1.5",
+    "express": "^4.16.4",
+    "ibm-watson": "^4.0.1",
+    "querystring": "^0.2.0"
+  }
+}
