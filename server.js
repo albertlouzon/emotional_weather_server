@@ -5,7 +5,7 @@ const axios = require('axios')
 var querystring = require('querystring');
 var cors = require('cors')
 var DomParser = require('dom-parser');
-
+var JSON = require("json-circular-stringify");
 var rssSource = 'http://www.oecd.org/'
 var rssSourceEnd = '/index.xml'
 var rssGuardian = 'https://www.theguardian.com/world/'
@@ -46,7 +46,6 @@ var articlesUrl = []
 // ENDPOINT FOR POST
 
 app.post('/sendNewsUrl', function (request, response) {
-
   let body = '';
   request.on('data', chunk => {
     body += chunk.toString();
@@ -84,7 +83,7 @@ app.post('/sendNewsUrl', function (request, response) {
                 setTimeout(() => {
                   extractDataFromWatsonResponse(metaObject)
                   dataCalculation()
-                  response.json(finalDetail)
+                response.json(finalDetail)
                   // console.log('end extractDataFromWatsonResponse', short_analyses)
                 }, 1000);
               }

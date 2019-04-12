@@ -16,6 +16,7 @@
     "dom-parser": "^0.1.5",
     "express": "^4.16.4",
     "ibm-watson": "^4.0.1",
+    "json-circular-stringify": "0.0.1",
     "querystring": "^0.2.0"
   }
 }
