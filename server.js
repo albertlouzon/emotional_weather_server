@@ -52,54 +52,54 @@ var articlesUrl = [];
 app.post("/sendNewsUrl/:country", function(request, response) {
   const country = request.params.country;
 
-  request.on("end", () => {
-    var url = `${rssGuardian}${country}/rss`;
-    //  var url = `${rssSource}${body}${rssSourceEnd}`
-    console.log("A son of a bitch requested this country ", url);
-    axios
-      .get(url)
-      .then(function(template) {
-        fetchLinksTemplate(template.data);
-        const metaObject = [];
-        for (var i = 0; i <= Object.keys(articlesUrl).length; i++) {
-          if (articlesUrl[i]) {
-            var nlu = new NaturalLanguageUnderstandingV1({
-              version: "2018-11-16"
-            });
-            var options = {
-              url: articlesUrl[i].trim(),
-              features: {
-                concepts: {},
-                categories: {},
-                // entities: {},
-                // keywords: {},
-                sentiment: {}
-              }
-            };
-            nlu.analyze(options, function(err, res) {
-              if (err) {
-                console.log(err);
-                return;
-              }
-              // console.log(res);
-              metaObject.push(res);
-              if (metaObject.length === Object.keys(articlesUrl).length - 1) {
-                setTimeout(() => {
-                  extractDataFromWatsonResponse(metaObject);
-                  dataCalculation();
-                  response.json(finalDetail);
-                  // console.log('end extractDataFromWatsonResponse', short_analyses)
-                }, 1000);
-              }
-            });
-          }
+  console.log(country);
+
+  var url = `${rssGuardian}${country}/rss`;
+  //  var url = `${rssSource}${body}${rssSourceEnd}`
+  console.log("A son of a bitch requested this country ", url);
+  axios
+    .get(url)
+    .then(function(template) {
+      fetchLinksTemplate(template.data);
+      const metaObject = [];
+      for (var i = 0; i <= Object.keys(articlesUrl).length; i++) {
+        if (articlesUrl[i]) {
+          var nlu = new NaturalLanguageUnderstandingV1({
+            version: "2018-11-16"
+          });
+          var options = {
+            url: articlesUrl[i].trim(),
+            features: {
+              concepts: {},
+              categories: {},
+              // entities: {},
+              // keywords: {},
+              sentiment: {}
+            }
+          };
+          nlu.analyze(options, function(err, res) {
+            if (err) {
+              console.log(err);
+              return;
+            }
+            // console.log(res);
+            metaObject.push(res);
+            if (metaObject.length === Object.keys(articlesUrl).length - 1) {
+              setTimeout(() => {
+                extractDataFromWatsonResponse(metaObject);
+                dataCalculation();
+                response.json(finalDetail);
+                // console.log('end extractDataFromWatsonResponse', short_analyses)
+              }, 1000);
+            }
+          });
         }
-      })
-      .catch(function(error) {
-        console.log(error);
-        response.send("this link is broken, give me another link");
-      });
-  });
+      }
+    })
+    .catch(function(error) {
+      console.log(error);
+      response.send("this link is broken, give me another link");
+    });
 });
 
 // Extracting links from html templates
