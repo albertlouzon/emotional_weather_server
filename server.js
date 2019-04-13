@@ -15,9 +15,10 @@ var corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-app.listen(process.env.PORT, '0.0.0.0', () => {
+var listener = app.listen(process.env.PORT, '0.0.0.0', () => {
   console.log(
-    "Jsuis le server et je viens de START AIE AIE AIE CA VA CHIER J AI AUCUNE DATA A TE MONTRER JE SUIS LA JUSTE POUR TE CASSER LES COUILLES"
+    "Jsuis le server et je viens de START AIE AIE AIE CA VA CHIER J AI AUCUNE DATA A TE MONTRER JE SUIS LA JUSTE POUR TE CASSER LES COUILLES",
+    listener.address().port
   );
 });
 
