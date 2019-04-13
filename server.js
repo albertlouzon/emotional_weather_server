@@ -48,7 +48,7 @@ let entities = []
 // ENDPOINT FOR POST
 
 
-app.post("/sendNewsUrl/:keyword",  function(request, response) {
+app.post("/:keyword",  function(request, response) {
   const userInput = request.params.keyword;
   console.log('the user input', userInput)
   googleArticles = []
