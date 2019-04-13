@@ -54,16 +54,16 @@ var finalDetail = {
 var articlesUrl = [];
 var googleArticles = []
 // ENDPOINT FOR POST
-app.post("/sendNewsUrl/:country", function(request, response) {
-  const userInput = request.params.country;
+app.post("/sendNewsUrl/:keyword", function(request, response) {
+  const userInput = request.params.keyword;
+  console.log('the user input', userInput)
   googleArticles = []
-  console.log('one')
-  newsapi.v2.topHeadlines({
+  newsapi.v2.everything({
     // sources: 'bbc-news,the-verge',
-    // q: 'bitcoin',
+    q: userInput,
     // category: 'business',
     language: 'en',
-    country: userInput
+    // country: userInput
   }).then(googleRes => {
     // console.log('googleres', googleRes)
     // console.log('google news api json : ', googleRes);
@@ -72,29 +72,6 @@ app.post("/sendNewsUrl/:country", function(request, response) {
     googleArticles.length = 20
     for (var i = 0; i <= googleArticles.length; i++) {
       if (googleArticles[i] ) {
-        // translate the article before to analyze
-
-        const languageTranslator = new LanguageTranslatorV3({
-           iam_apikey: 'Ca0B4XsSHGB7-uvoYvxrzg6Fh4F5pSoOqWix_v2uegja',
-           url: 'https://gateway-lon.watsonplatform.net/language-translator/api',
-          version: "2018-11-16"
-        });
-        
-        const params = {
-          text: 'sale chien',
-          source: 'fr',
-          target: 'es',
-        }
-
-        languageTranslator.translate(params)
-        .then(body => {
-          // console.log('\n');
-          console.log('incroyable ############### ', body['translations'][0]['translation'])
-        })
-        .catch(err => {
-          console.log(err);
-        })
-
         var nlu = new NaturalLanguageUnderstandingV1({
           version: "2018-11-16"
         });
@@ -124,6 +101,59 @@ app.post("/sendNewsUrl/:country", function(request, response) {
             }, 1000);
           }
         });
+        // translate the article before to analyze
+
+        // const languageTranslator = new LanguageTranslatorV3({
+        //    iam_apikey: 'Ca0B4XsSHGB7-uvoYvxrzg6Fh4F5pSoOqWix_v2uegja',
+        //    url: 'https://gateway-lon.watsonplatform.net/language-translator/api',
+        //   version: "2018-11-16"
+        // });
+        // const tamerlapute = googleArticles[i].description || 'MERDE'
+        // console.log(tamerlapute)
+        // const params = {
+        //   text: tamerlapute,
+        //   source:'fr',
+        //   target: 'en',
+        // }
+
+        // languageTranslator.translate(params)
+        // .then(body => {
+        //   // console.log('\n');
+        //   console.log('incroyable ############### ', body['translations'])
+        //   // var nlu = new NaturalLanguageUnderstandingV1({
+        //   //   version: "2018-11-16"
+        //   // });
+        //   // var options = {
+        //   //   url:body,
+        //   //   features: {
+        //   //     concepts: {},
+        //   //     categories: {},
+        //   //     // entities: {},
+        //   //     // keywords: {},
+        //   //     sentiment: {}
+        //   //   }
+        //   // };
+        //   // nlu.analyze(options, function(err, res) {
+        //   //   if (err) {
+        //   //     console.log(err);
+        //   //     return;
+        //   //   }
+        //   //   console.log('C EST LA WIN ', res)
+        //   //   // console.log(res);
+        //   //   metaObject.push(res);
+        //   //   if (metaObject.length === googleArticles.length - 1) {
+        //   //     setTimeout(() => {
+        //   //       extractDataFromWatsonResponse(metaObject);
+        //   //       dataCalculation();
+        //   //       response.json(finalDetail);
+        //   //       // console.log('end extractDataFromWatsonResponse', googleArticles)
+        //   //     }, 1000);
+        //   //   }
+        //   // });
+        // })
+        // .catch(err => {
+        //   console.log(err);
+        // })
       }
     }
   })
@@ -131,14 +161,6 @@ app.post("/sendNewsUrl/:country", function(request, response) {
     console.log(error);
     response.send("this link is broken, give me another link");
   });
-    /*
-      {
-        status: "ok",
-        sources: [...]
-      }
-    */
-
-
 })
 // Extracting links from html templates
 
@@ -177,11 +199,11 @@ function dataCalculation() {
     finalDetail.listOfAllUrls.push(article.url);
     sumOfscore = sumOfscore + article.generalInfo.score;
     let articlesSharingCategories = []
-    if(article['categories']) {
+    if(article && article['categories']) {
       article.categories.articleScore = article.generalInfo.score;
       const currentCategories = article.categories.label;
       articlesSharingCategories = short_analyses.filter(
-       x => x.categories.label === currentCategories && x.url !== article.url
+       x => x.categories && x.categories.label === currentCategories && x.url !== article.url
      );
     }
  
@@ -231,3 +253,6 @@ function dataCalculation() {
   // finalDetail.listOfAllUrls.length = 7;
   return finalDetail;
 }
+
+
+function getCountryLanguage(){}
