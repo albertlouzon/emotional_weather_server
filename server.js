@@ -54,6 +54,7 @@ var finalDetail = {
 };
 var articlesUrl = [];
 var googleArticles = []
+let entities = []
 // ENDPOINT FOR POST
 
 
@@ -75,9 +76,9 @@ app.post("/sendNewsUrl/:keyword",  function(request, response) {
     if(googleArticles.length > 20) {
       googleArticles.length = 20
     }
-  
+    let asyncCounter = googleArticles.length
     googleArticles.forEach( function(article, i) {
-      if(article) {
+      if(article.url) {
         var nlu = new NaturalLanguageUnderstandingV1({
           version: "2018-11-16",
         });
@@ -87,23 +88,32 @@ app.post("/sendNewsUrl/:keyword",  function(request, response) {
             // concepts: {},
             categories: {},
             entities: {},
-            keywords: {},
+            // keywords: {},
             sentiment: {}
           }
         };
         nlu.analyze(options,  function(err, res) {
-          if (err) {
-            console.log(err);
+            asyncCounter -= 1
+          if (res) {
+            asyncCounter += 1
+            metaObject.push(res);
+          }
+          else{
+            console.log('error in ibm analysis for one article', err)
             return;
           }
-          // console.log(res);
-          metaObject.push(res);
-          if(googleArticles.length === metaObject.length) {
+          console.log(asyncCounter, 'vs', metaObject.length);
+          if(metaObject.length === asyncCounter) {
             extractDataFromWatsonResponse(metaObject);
-            dataCalculation();
-            response.json(finalDetail);
             console.log('end extractDataFromWatsonResponse')
+            dataCalculation();
+            console.log('end datacalcu')
+            response.json(finalDetail);
           }
+        
+       
+         
+          // console.log(res);
         });
       }
       else{
@@ -113,8 +123,8 @@ app.post("/sendNewsUrl/:keyword",  function(request, response) {
   });
   })
   .catch(function(error) {
-    console.log(error);
-    response.send("this link is broken, give me another link");
+    console.log('error in google api fetch', error);
+    response.send("could not fetch relevant article for this keyword", err);
   });7
 })
 // Extracting links from html templates
@@ -130,6 +140,7 @@ function extractDataFromWatsonResponse(metaObject) {
     listOfAllUrls: [],
     metadata: []
   };
+  entities = []
   finalDetail.metadata = metaObject
 
   // here we extract raw material from the object. And we start filtering some arrays if they are too long.
@@ -149,6 +160,7 @@ function extractDataFromWatsonResponse(metaObject) {
 }
 
 function dataCalculation() {
+  console.log('go')
   let sumOfscore = 0;
   let scoreDivider = 0
   short_analyses.forEach((analyse) => {
@@ -156,6 +168,20 @@ function dataCalculation() {
       scoreDivider += 1
     }
   })
+  // console.log('before crash:', analyse)
+  // // logic for entities
+  // if(analyse['keywords'].length > 0) {
+  //   analyse['keywords'].forEach((entity) =>{
+  //     entities.push({
+  //       type: entity['type'],
+  //       title: entity['text'],
+  //       article: {url: analyse.url, score: analyse["generalInfo"]['score']} ,
+  //     })
+  //   })
+  // }
+
+
+  // logic for categories and score averages
   let commonCategories = [];
   short_analyses.forEach(article => {
     // score
