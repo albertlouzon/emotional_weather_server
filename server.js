@@ -49,7 +49,8 @@ var finalDetail = {
   icon: "",
   mainCategories: [],
   mainKeywords: [],
-  listOfAllUrls: []
+  listOfAllUrls: [],
+  metadata: []
 };
 var articlesUrl = [];
 var googleArticles = []
@@ -61,8 +62,9 @@ app.post("/sendNewsUrl/:keyword", function(request, response) {
   newsapi.v2.everything({
     // sources: 'bbc-news,the-verge',
     q: userInput,
-    // category: 'business',
+      // category: 'business',
     language: 'en',
+    sortBy: 'relevance'
     // country: userInput
   }).then(googleRes => {
     // console.log('googleres', googleRes)
@@ -78,10 +80,10 @@ app.post("/sendNewsUrl/:keyword", function(request, response) {
         var options = {
           url: googleArticles[i].url,
           features: {
-            concepts: {},
+            // concepts: {},
             categories: {},
-            // entities: {},
-            // keywords: {},
+            entities: {},
+            keywords: {},
             sentiment: {}
           }
         };
@@ -120,36 +122,6 @@ app.post("/sendNewsUrl/:keyword", function(request, response) {
         // .then(body => {
         //   // console.log('\n');
         //   console.log('incroyable ############### ', body['translations'])
-        //   // var nlu = new NaturalLanguageUnderstandingV1({
-        //   //   version: "2018-11-16"
-        //   // });
-        //   // var options = {
-        //   //   url:body,
-        //   //   features: {
-        //   //     concepts: {},
-        //   //     categories: {},
-        //   //     // entities: {},
-        //   //     // keywords: {},
-        //   //     sentiment: {}
-        //   //   }
-        //   // };
-        //   // nlu.analyze(options, function(err, res) {
-        //   //   if (err) {
-        //   //     console.log(err);
-        //   //     return;
-        //   //   }
-        //   //   console.log('C EST LA WIN ', res)
-        //   //   // console.log(res);
-        //   //   metaObject.push(res);
-        //   //   if (metaObject.length === googleArticles.length - 1) {
-        //   //     setTimeout(() => {
-        //   //       extractDataFromWatsonResponse(metaObject);
-        //   //       dataCalculation();
-        //   //       response.json(finalDetail);
-        //   //       // console.log('end extractDataFromWatsonResponse', googleArticles)
-        //   //     }, 1000);
-        //   //   }
-        //   // });
         // })
         // .catch(err => {
         //   console.log(err);
@@ -172,18 +144,21 @@ function extractDataFromWatsonResponse(metaObject) {
     icon: "",
     mainCategories: [],
     mainKeywords: [],
-    listOfAllUrls: []
+    listOfAllUrls: [],
+    metadata: []
   };
+  finalDetail.metadata = metaObject
+
   // here we extract raw material from the object. And we start filtering some arrays if they are too long.
   metaObject.forEach(analyse => {
     short_analyses.push({
       generalInfo: analyse["sentiment"]["document"],
       categories: analyse["categories"][0],
       keywords: [
-        analyse["concepts"][0],
-        analyse["concepts"][1],
-        analyse["concepts"][2],
-        analyse["concepts"][3]
+        analyse["entities"][0],
+        analyse["entities"][1],
+        analyse["entities"][2],
+        analyse["entities"][3]
       ],
       url: analyse["retrieved_url"]
     });
@@ -192,7 +167,12 @@ function extractDataFromWatsonResponse(metaObject) {
 
 function dataCalculation() {
   let sumOfscore = 0;
-  const scoreDivider = short_analyses.length;
+  let scoreDivider = 0
+  short_analyses.forEach((analyse) => {
+    if(analyse["generalInfo"]['score'] !== 0) {
+      scoreDivider += 1
+    }
+  })
   let commonCategories = [];
   short_analyses.forEach(article => {
     // score
@@ -221,11 +201,13 @@ function dataCalculation() {
     const scoreDivider2 = commonCategory.length;
     const urls = [];
     commonCategory.forEach(article => {
-      sumOfscore2 = sumOfscore2 + article["categories"]["score"];
-      urls.push({
-        url: article["url"],
-        score: article["categories"]["articleScore"]
-      });
+      if(article["categories"]["score"] !== 0) {
+        sumOfscore2 = sumOfscore2 + article["categories"]["score"];
+        urls.push({
+          url: article["url"],
+          score: article["categories"]["articleScore"]
+        });
+      }
     });
     const categoryReliability = sumOfscore2 / scoreDivider2;
     if (urls.length > 5) {
