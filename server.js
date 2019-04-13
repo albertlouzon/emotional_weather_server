@@ -108,7 +108,7 @@ app.post("/sendNewsUrl/:keyword",  function(request, response) {
             extractDataFromWatsonResponse(metaObject);
             console.log('end extractDataFromWatsonResponse')
             dataCalculation();
-            console.log('end datacalcu', finalDetail)
+            console.log('end datacalcu')
             // finalDetail['abyCalcy']  = entities
             response.json(finalDetail);
           }
@@ -165,14 +165,22 @@ function extractDataFromWatsonResponse(metaObject) {
 function sortEntities() {
   entities.forEach((entity)=>{
     if(Array.isArray(finalDetail.entities[entity['type']])) {
-      finalDetail.entities[entity['type']].push({
-        title: entity.title,
-        article: entity.article
-      })
+      if(finalDetail.entities[entity['type']].find(x => x.title === entity.title)) {
+        finalDetail.entities[entity['type']].find(x => x.title === entity.title).count = finalDetail.entities[entity['type']].find(x => x.title === entity.title).count + 1
+        finalDetail.entities[entity['type']].find(x => x.title === entity.title).title = entity.title
+        finalDetail.entities[entity['type']].find(x => x.title === entity.title).article.push(entity.article)
+      } else {
+        finalDetail.entities[entity['type']].push({
+          title: entity.title,
+          article: [entity.article],
+          count:1,
+        })
+      }
     }else {
       finalDetail.entities[entity['type']] = [{
         title: entity.title,
-        article: entity.article
+        article: [entity.article],
+        count:1,
       }]
     }
   })
