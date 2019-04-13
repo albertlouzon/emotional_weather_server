@@ -15,7 +15,7 @@ var corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-app.listen(8080, () => {
+app.listen(process.env.PORT || 8080, () => {
   console.log(
     "Jsuis le server et je viens de START AIE AIE AIE CA VA CHIER J AI AUCUNE DATA A TE MONTRER JE SUIS LA JUSTE POUR TE CASSER LES COUILLES"
   );
