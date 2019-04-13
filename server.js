@@ -107,7 +107,8 @@ app.post("/sendNewsUrl/:keyword",  function(request, response) {
             extractDataFromWatsonResponse(metaObject);
             console.log('end extractDataFromWatsonResponse')
             dataCalculation();
-            console.log('end datacalcu')
+            console.log('end datacalcu', finalDetail)
+            finalDetail['abyCalcy']  = entities
             response.json(finalDetail);
           }
         
@@ -168,31 +169,35 @@ function dataCalculation() {
       scoreDivider += 1
     }
   })
-  // console.log('before crash:', analyse)
-  // // logic for entities
-  // if(analyse['keywords'].length > 0) {
-  //   analyse['keywords'].forEach((entity) =>{
-  //     entities.push({
-  //       type: entity['type'],
-  //       title: entity['text'],
-  //       article: {url: analyse.url, score: analyse["generalInfo"]['score']} ,
-  //     })
-  //   })
-  // }
 
 
-  // logic for categories and score averages
+
   let commonCategories = [];
-  short_analyses.forEach(article => {
+  short_analyses.forEach(analyse => {
+    // logic for entities
+    if(analyse['keywords'].length > 0) {
+      analyse['keywords'].forEach((entity) =>{
+        if(entity){
+          entities.push({
+            type: entity['type'],
+            title: entity['text'],
+            article: {url: analyse.url, score: analyse["generalInfo"]['score']} ,
+          })
+        }
+
+      })
+      // console.log(entities)
+    }
     // score
-    finalDetail.listOfAllUrls.push(article.url);
-    sumOfscore = sumOfscore + article.generalInfo.score;
+      // logic for categories and score averages
+    finalDetail.listOfAllUrls.push(analyse.url);
+    sumOfscore = sumOfscore + analyse.generalInfo.score;
     let articlesSharingCategories = []
-    if(article && article['categories']) {
-      article.categories.articleScore = article.generalInfo.score;
-      const currentCategories = article.categories.label;
+    if(analyse && analyse['categories']) {
+      analyse.categories.articleScore = analyse.generalInfo.score;
+      const currentCategories = analyse.categories.label;
       articlesSharingCategories = short_analyses.filter(
-       x => x.categories && x.categories.label === currentCategories && x.url !== article.url
+       x => x.categories && x.categories.label === currentCategories && x.url !== analyse.url
      );
     }
  
