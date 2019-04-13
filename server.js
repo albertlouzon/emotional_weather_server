@@ -97,6 +97,7 @@ app.post("/sendNewsUrl/:keyword",  function(request, response) {
             asyncCounter -= 1
           if (res) {
             asyncCounter += 1
+            res['title'] = article.title
             metaObject.push(res);
           }
           else{
@@ -144,12 +145,11 @@ function extractDataFromWatsonResponse(metaObject) {
     metadata: []
   };
   entities = []
-  finalDetail.metadata = metaObject
-
   // here we extract raw material from the object. And we start filtering some arrays if they are too long.
   metaObject.forEach(analyse => {
     short_analyses.push({
       generalInfo: analyse["sentiment"]["document"],
+      title: analyse.title,
       categories: analyse["categories"][0],
       keywords: [
         analyse["entities"][0],
@@ -204,7 +204,7 @@ function dataCalculation() {
           entities.push({
             type: entity['type'],
             title: entity['text'],
-            article: {url: analyse.url, score: analyse["generalInfo"]['score']} ,
+            article: {url: analyse.url, score: analyse["generalInfo"]['score'], title: analyse.title} ,
           })
         }
 
@@ -243,7 +243,8 @@ function dataCalculation() {
         sumOfscore2 = sumOfscore2 + article["categories"]["score"];
         urls.push({
           url: article["url"],
-          score: article["categories"]["articleScore"]
+          score: article["categories"]["articleScore"],
+          title:article.title
         });
       }
     });
