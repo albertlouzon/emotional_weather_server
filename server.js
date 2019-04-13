@@ -1,32 +1,21 @@
 require('dotenv').config();
-
-
 const express = require("express");
+const path = require('path')
 const bodyParser = require("body-parser");
 const app = express();
-const LanguageTranslatorV3 = require('ibm-watson/language-translator/v3.js');
-const axios = require("axios");
-var querystring = require("querystring");
+// const LanguageTranslatorV3 = require('ibm-watson/language-translator/v3.js');
 var cors = require("cors");
-var DomParser = require("dom-parser");
-var JSON = require("json-circular-stringify");
-var rssSource = "http://www.oecd.org/";
-var rssSourceEnd = "/index.xml";
-var rssGuardian = "https://www.theguardian.com/world/";
-var fs = require("fs");
 const NewsAPI = require('newsapi');
 const newsapi = new NewsAPI('7a7ea783738a496d99eec1bcdd6cff7b');
 var NaturalLanguageUnderstandingV1 = require("ibm-watson/natural-language-understanding/v1.js");
-require("dotenv").config({ silent: true }); //  optional
 
-var requiredUrl = "";
 var corsOptions = {
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-app.listen(8000, () => {
+app.listen(8080, () => {
   console.log(
     "Jsuis le server et je viens de START AIE AIE AIE CA VA CHIER J AI AUCUNE DATA A TE MONTRER JE SUIS LA JUSTE POUR TE CASSER LES COUILLES"
   );
