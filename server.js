@@ -49,6 +49,7 @@ var finalDetail = {
   icon: "",
   mainCategories: [],
   mainKeywords: [],
+  entities:{},
   listOfAllUrls: [],
   metadata: []
 };
@@ -108,7 +109,7 @@ app.post("/sendNewsUrl/:keyword",  function(request, response) {
             console.log('end extractDataFromWatsonResponse')
             dataCalculation();
             console.log('end datacalcu', finalDetail)
-            finalDetail['abyCalcy']  = entities
+            // finalDetail['abyCalcy']  = entities
             response.json(finalDetail);
           }
         
@@ -138,6 +139,7 @@ function extractDataFromWatsonResponse(metaObject) {
     icon: "",
     mainCategories: [],
     mainKeywords: [],
+    entities:{},
     listOfAllUrls: [],
     metadata: []
   };
@@ -160,6 +162,22 @@ function extractDataFromWatsonResponse(metaObject) {
   });
 }
 
+function sortEntities() {
+  entities.forEach((entity)=>{
+    if(Array.isArray(finalDetail.entities[entity['type']])) {
+      finalDetail.entities[entity['type']].push({
+        title: entity.title,
+        article: entity.article
+      })
+    }else {
+      finalDetail.entities[entity['type']] = [{
+        title: entity.title,
+        article: entity.article
+      }]
+    }
+  })
+}
+
 function dataCalculation() {
   console.log('go')
   let sumOfscore = 0;
@@ -169,9 +187,6 @@ function dataCalculation() {
       scoreDivider += 1
     }
   })
-
-
-
   let commonCategories = [];
   short_analyses.forEach(analyse => {
     // logic for entities
@@ -205,6 +220,7 @@ function dataCalculation() {
       commonCategories.push(articlesSharingCategories);
     }
   });
+  sortEntities()
   var r = commonCategories.filter(((r = {}), a => !(2 - (r[a] = ++r[a] | 0))));
   // mainCategories calculation of the global score and retrieving global label. HEre we gonna get rid of keywords and url
   // HIGH CATEGORY SCORE MEANS HIGH RELIABILITY THAT THIS ARTICLE IS ABOUT THIS CATEGORY
@@ -251,4 +267,3 @@ function dataCalculation() {
 }
 
 
-function getCountryLanguage(){}
