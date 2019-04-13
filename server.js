@@ -55,7 +55,9 @@ var finalDetail = {
 var articlesUrl = [];
 var googleArticles = []
 // ENDPOINT FOR POST
-app.post("/sendNewsUrl/:keyword", function(request, response) {
+
+
+app.post("/sendNewsUrl/:keyword",  function(request, response) {
   const userInput = request.params.keyword;
   console.log('the user input', userInput)
   googleArticles = []
@@ -66,19 +68,21 @@ app.post("/sendNewsUrl/:keyword", function(request, response) {
     language: 'en',
     sortBy: 'relevance'
     // country: userInput
-  }).then(googleRes => {
-    // console.log('googleres', googleRes)
+  }).then( googleRes => {
     // console.log('google news api json : ', googleRes);
     const metaObject = [];
     googleArticles = Object.values(googleRes)[2]
-    googleArticles.length = 20
-    for (var i = 0; i <= googleArticles.length; i++) {
-      if (googleArticles[i] ) {
+    if(googleArticles.length > 20) {
+      googleArticles.length = 20
+    }
+  
+    googleArticles.forEach( function(article, i) {
+      if(article) {
         var nlu = new NaturalLanguageUnderstandingV1({
-          version: "2018-11-16"
+          version: "2018-11-16",
         });
         var options = {
-          url: googleArticles[i].url,
+          url: article.url,
           features: {
             // concepts: {},
             categories: {},
@@ -87,52 +91,31 @@ app.post("/sendNewsUrl/:keyword", function(request, response) {
             sentiment: {}
           }
         };
-        nlu.analyze(options, function(err, res) {
+        nlu.analyze(options,  function(err, res) {
           if (err) {
             console.log(err);
             return;
           }
           // console.log(res);
           metaObject.push(res);
-          if (metaObject.length === googleArticles.length - 1) {
-            setTimeout(() => {
-              extractDataFromWatsonResponse(metaObject);
-              dataCalculation();
-              response.json(finalDetail);
-              // console.log('end extractDataFromWatsonResponse', googleArticles)
-            }, 1000);
+          if(googleArticles.length === metaObject.length) {
+            extractDataFromWatsonResponse(metaObject);
+            dataCalculation();
+            response.json(finalDetail);
+            console.log('end extractDataFromWatsonResponse')
           }
         });
-        // translate the article before to analyze
-
-        // const languageTranslator = new LanguageTranslatorV3({
-        //    iam_apikey: 'Ca0B4XsSHGB7-uvoYvxrzg6Fh4F5pSoOqWix_v2uegja',
-        //    url: 'https://gateway-lon.watsonplatform.net/language-translator/api',
-        //   version: "2018-11-16"
-        // });
-        // const tamerlapute = googleArticles[i].description || 'MERDE'
-        // console.log(tamerlapute)
-        // const params = {
-        //   text: tamerlapute,
-        //   source:'fr',
-        //   target: 'en',
-        // }
-
-        // languageTranslator.translate(params)
-        // .then(body => {
-        //   // console.log('\n');
-        //   console.log('incroyable ############### ', body['translations'])
-        // })
-        // .catch(err => {
-        //   console.log(err);
-        // })
       }
-    }
+      else{
+        console.log('toxic article. if you see this it might have broken the moment we isolate the last element in the loop', article)
+      }
+
+  });
   })
   .catch(function(error) {
     console.log(error);
     response.send("this link is broken, give me another link");
-  });
+  });7
 })
 // Extracting links from html templates
 
