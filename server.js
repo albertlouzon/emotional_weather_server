@@ -50,7 +50,7 @@ let entities = []
 app.post("/:keyword",  function(request, response) {
   const userInput = request.params.keyword;
   console.log('the user input', userInput)
-  var formatedInput = userInput.replace(/ /g,"_");
+  var formatedInput = userInput.replace(/ /g,"-");
   googleArticles = []
   newsapi.v2.everything({
     // sources: 'bbc-news,the-verge',
