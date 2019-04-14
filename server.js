@@ -68,8 +68,8 @@ app.post("/:keyword", function (request, response) {
     if (googleArticles.length > 20) {
       googleArticles.length = 20
     }
-    let asyncCounter = googleArticles.length
-    googleArticles.forEach(function (article, i) {
+      let asyncCounter = googleArticles.length
+      googleArticles.forEach(function (article, i) {
       if (article.url) {
         var nlu = new NaturalLanguageUnderstandingV1({
           version: "2018-11-16",
@@ -87,8 +87,9 @@ app.post("/:keyword", function (request, response) {
         nlu.analyze(options, function (err, res) {
           asyncCounter -= 1
           if (res) {
-            asyncCounter += 1
-            res['title'] = article.title
+            asyncCounter += 1;
+            res['title'] = article.title;
+            res['urlToImage'] = article.urlToImage;
             metaObject.push(res);
           }
           else {
@@ -144,6 +145,7 @@ function extractDataFromWatsonResponse(metaObject) {
     short_analyses.push({
       generalInfo: analyse["sentiment"]["document"],
       title: analyse.title,
+      urlToImage:analyse.urlToImage,
       categories: analyse["categories"][0],
       keywords: [
         analyse["entities"][0],
