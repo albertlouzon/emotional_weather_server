@@ -49,7 +49,7 @@ let entities = []
 
 app.post("/:keyword",  function(request, response) {
   const userInput = request.params.keyword;
-  console.log('the user input', userInput)
+  console.log('the request started, user input', userInput)
   var formatedInput = userInput.replace(/ /g,"-");
   googleArticles = []
   newsapi.v2.everything({
@@ -93,12 +93,12 @@ app.post("/:keyword",  function(request, response) {
             console.log('error in ibm analysis for one article', err)
             return;
           }
-          console.log(asyncCounter, 'vs', metaObject.length);
+          // console.log(asyncCounter, 'vs', metaObject.length);
           if(metaObject.length === asyncCounter) {
             extractDataFromWatsonResponse(metaObject);
             console.log('end extractDataFromWatsonResponse')
             dataCalculation();
-            console.log('end datacalcu')
+            console.log('end of the request for ', userInput)
             // finalDetail['abyCalcy']  = entities
             response.json(finalDetail);
           }
