@@ -20,7 +20,7 @@ var listener = app.listen(process.env.PORT, '0.0.0.0', () => {
   );
 });
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
     "Access-Control-Allow-Headers",
@@ -37,10 +37,10 @@ var finalDetail = {
   icon: "",
   mainCategories: [],
   mainKeywords: [],
-  entities:{},
+  entities: {},
   listOfAllUrls: [],
   metadata: [],
-      extremes:[],
+  extremes: [],
 
 };
 var articlesUrl = [];
@@ -49,28 +49,28 @@ let entities = []
 // ENDPOINT FOR POST
 
 
-app.post("/:keyword",  function(request, response) {
+app.post("/:keyword", function (request, response) {
   const userInput = request.params.keyword;
   console.log('the request started, user input', userInput)
-  var formatedInput = userInput.replace(/ /g,"-");
+  var formatedInput = userInput.replace(/ /g, "-");
   googleArticles = []
   newsapi.v2.everything({
     // sources: 'bbc-news,the-verge',
     q: formatedInput,
-      // category: 'business',
+    // category: 'business',
     language: 'en',
     sortBy: 'relevance'
     // country: userInput
-  }).then( googleRes => {
+  }).then(googleRes => {
     // console.log('google news api json : ', googleRes);
     const metaObject = [];
     googleArticles = Object.values(googleRes)[2]
-    if(googleArticles.length > 20) {
+    if (googleArticles.length > 20) {
       googleArticles.length = 20
     }
     let asyncCounter = googleArticles.length
-    googleArticles.forEach( function(article, i) {
-      if(article.url) {
+    googleArticles.forEach(function (article, i) {
+      if (article.url) {
         var nlu = new NaturalLanguageUnderstandingV1({
           version: "2018-11-16",
         });
@@ -84,19 +84,19 @@ app.post("/:keyword",  function(request, response) {
             sentiment: {}
           }
         };
-        nlu.analyze(options,  function(err, res) {
-            asyncCounter -= 1
+        nlu.analyze(options, function (err, res) {
+          asyncCounter -= 1
           if (res) {
             asyncCounter += 1
             res['title'] = article.title
             metaObject.push(res);
           }
-          else{
+          else {
             console.log('error in ibm analysis for one article', err)
             return;
           }
           // console.log(asyncCounter, 'vs', metaObject.length);
-          if(metaObject.length === asyncCounter) {
+          if (metaObject.length === asyncCounter) {
             extractDataFromWatsonResponse(metaObject);
             console.log('end extractDataFromWatsonResponse')
             dataCalculation();
@@ -105,22 +105,22 @@ app.post("/:keyword",  function(request, response) {
             finalDetail.extremes = finalDetail.extremes.sort(sortNumber)
             response.json(finalDetail);
           }
-        
-       
-         
+
+
+
           // console.log(res);
         });
       }
-      else{
+      else {
         console.log('toxic article. if you see this it might have broken the moment we isolate the last element in the loop', article)
       }
 
-  });
+    });
   })
-  .catch(function(error) {
-    console.log('error in google api fetch', error);
-    response.send("could not fetch relevant article for this keyword", err);
-  });7
+    .catch(function (error) {
+      console.log('error in google api fetch', error);
+      response.send("could not fetch relevant article for this keyword", err);
+    }); 7
 })
 // Extracting links from html templates
 
@@ -132,12 +132,13 @@ function extractDataFromWatsonResponse(metaObject) {
     icon: "",
     mainCategories: [],
     mainKeywords: [],
-    entities:{},
+    entities: {},
     listOfAllUrls: [],
     metadata: [],
-    extremes:[],
+    extremes: [],
   };
   entities = []
+  finalDetail.metadata = metaObject
   // here we extract raw material from the object. And we start filtering some arrays if they are too long.
   metaObject.forEach(analyse => {
     short_analyses.push({
@@ -156,9 +157,9 @@ function extractDataFromWatsonResponse(metaObject) {
 }
 
 function sortEntities() {
-  entities.forEach((entity)=>{
-    if(Array.isArray(finalDetail.entities[entity['type']])) {
-      if(finalDetail.entities[entity['type']].find(x => x.title === entity.title)) {
+  entities.forEach((entity) => {
+    if (Array.isArray(finalDetail.entities[entity['type']])) {
+      if (finalDetail.entities[entity['type']].find(x => x.title === entity.title)) {
         finalDetail.entities[entity['type']].find(x => x.title === entity.title).count = finalDetail.entities[entity['type']].find(x => x.title === entity.title).count + 1
         finalDetail.entities[entity['type']].find(x => x.title === entity.title).title = entity.title
         finalDetail.entities[entity['type']].find(x => x.title === entity.title).article.push(entity.article)
@@ -166,14 +167,14 @@ function sortEntities() {
         finalDetail.entities[entity['type']].push({
           title: entity.title,
           article: [entity.article],
-          count:1,
+          count: 1,
         })
       }
-    }else {
+    } else {
       finalDetail.entities[entity['type']] = [{
         title: entity.title,
         article: [entity.article],
-        count:1,
+        count: 1,
       }]
     }
   })
@@ -184,20 +185,20 @@ function dataCalculation() {
   let sumOfscore = 0;
   let scoreDivider = 0
   short_analyses.forEach((analyse) => {
-    if(analyse["generalInfo"]['score'] !== 0) {
+    if (analyse["generalInfo"]['score'] !== 0) {
       scoreDivider += 1
     }
   })
   let commonCategories = [];
   short_analyses.forEach(analyse => {
     // logic for entities
-    if(analyse['keywords'].length > 0) {
-      analyse['keywords'].forEach((entity) =>{
-        if(entity){
+    if (analyse['keywords'].length > 0) {
+      analyse['keywords'].forEach((entity) => {
+        if (entity) {
           entities.push({
             type: entity['type'],
             title: entity['text'],
-            article: {url: analyse.url, score: analyse["generalInfo"]['score'], title: analyse.title} ,
+            article: { url: analyse.url, score: analyse["generalInfo"]['score'], title: analyse.title },
           })
         }
 
@@ -205,20 +206,20 @@ function dataCalculation() {
       // console.log(entities)
     }
     // logic for max and min scores
-      finalDetail['extremes'].push(analyse["generalInfo"]['score'])
+    finalDetail['extremes'].push(analyse["generalInfo"]['score'])
 
-      // logic for categories and score averages
+    // logic for categories and score averages
     finalDetail.listOfAllUrls.push(analyse.url);
     sumOfscore = sumOfscore + analyse.generalInfo.score;
     let articlesSharingCategories = []
-    if(analyse && analyse['categories']) {
+    if (analyse && analyse['categories']) {
       analyse.categories.articleScore = analyse.generalInfo.score;
       const currentCategories = analyse.categories.label;
       articlesSharingCategories = short_analyses.filter(
-       x => x.categories && x.categories.label === currentCategories && x.url !== analyse.url
-     );
+        x => x.categories && x.categories.label === currentCategories && x.url !== analyse.url
+      );
     }
- 
+
     if (articlesSharingCategories.length > 1) {
       commonCategories.push(articlesSharingCategories);
     }
@@ -234,12 +235,12 @@ function dataCalculation() {
     const scoreDivider2 = commonCategory.length;
     const urls = [];
     commonCategory.forEach(article => {
-      if(article["categories"]["score"] !== 0) {
+      if (article["categories"]["score"] !== 0) {
         sumOfscore2 = sumOfscore2 + article["categories"]["score"];
         urls.push({
           url: article["url"],
           score: article["categories"]["articleScore"],
-          title:article.title
+          title: article.title
         });
       }
     });
@@ -271,7 +272,6 @@ function dataCalculation() {
 }
 
 
-  function sortNumber(a,b) {
-        return a - b;
-    }
-    
+function sortNumber(a, b) {
+  return a - b;
+}
