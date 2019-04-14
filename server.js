@@ -12,13 +12,11 @@ var NaturalLanguageUnderstandingV1 = require("ibm-watson/natural-language-unders
 var corsOptions = {
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
-
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 var listener = app.listen(process.env.PORT, '0.0.0.0', () => {
   console.log(
     "Jsuis le server et je viens de START AIE AIE AIE CA VA CHIER J AI AUCUNE DATA A TE MONTRER JE SUIS LA JUSTE POUR TE CASSER LES COUILLES",
-    listener.address().port
   );
 });
 
@@ -52,10 +50,11 @@ let entities = []
 app.post("/:keyword",  function(request, response) {
   const userInput = request.params.keyword;
   console.log('the user input', userInput)
+  var formatedInput = userInput.replace(/ /g,"_");
   googleArticles = []
   newsapi.v2.everything({
     // sources: 'bbc-news,the-verge',
-    q: userInput,
+    q: formatedInput,
       // category: 'business',
     language: 'en',
     sortBy: 'relevance'
