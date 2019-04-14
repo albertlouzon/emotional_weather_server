@@ -39,7 +39,9 @@ var finalDetail = {
   mainKeywords: [],
   entities:{},
   listOfAllUrls: [],
-  metadata: []
+  metadata: [],
+      extremes:[],
+
 };
 var articlesUrl = [];
 var googleArticles = []
@@ -100,6 +102,7 @@ app.post("/:keyword",  function(request, response) {
             dataCalculation();
             console.log('end of the request for ', userInput)
             // finalDetail['abyCalcy']  = entities
+            finalDetail.extremes = finalDetail.extremes.sort(sortNumber)
             response.json(finalDetail);
           }
         
@@ -131,7 +134,8 @@ function extractDataFromWatsonResponse(metaObject) {
     mainKeywords: [],
     entities:{},
     listOfAllUrls: [],
-    metadata: []
+    metadata: [],
+    extremes:[],
   };
   entities = []
   // here we extract raw material from the object. And we start filtering some arrays if they are too long.
@@ -200,7 +204,9 @@ function dataCalculation() {
       })
       // console.log(entities)
     }
-    // score
+    // logic for max and min scores
+      finalDetail['extremes'].push(analyse["generalInfo"]['score'])
+
       // logic for categories and score averages
     finalDetail.listOfAllUrls.push(analyse.url);
     sumOfscore = sumOfscore + analyse.generalInfo.score;
@@ -265,3 +271,7 @@ function dataCalculation() {
 }
 
 
+  function sortNumber(a,b) {
+        return a - b;
+    }
+    
