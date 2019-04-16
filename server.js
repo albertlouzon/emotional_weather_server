@@ -79,7 +79,14 @@ app.post("/:keyword", function (request, response) {
           features: {
             // concepts: {},
             categories: {},
-            entities: {},
+            entities: {
+              "sentiment": true,
+            },
+            emotions: {
+              "targets": [
+                userInput
+              ]
+            },
             // keywords: {},
             sentiment: {}
           }
